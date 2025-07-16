@@ -554,3 +554,98 @@ int kosaraju(vector<vector<int>> &adj) {
 // Tarjan's Algorithm
 
 
+// Tarjan’s Algorithm uses DFS to find bridges or strongly connected
+// components. It tracks discovery time disc[] and the lowest reachable
+// ancestor low[]. If low[v] > disc[u], edge (u,v) is a bridge. For SCCs, if low[u] == disc[u], it marks the root of an SCC. Time: O(V + E).
+
+bool dfs(int node, int parent, vector<vector<int>> &adj, int clock, vector<int> &time, vector<int> &low, vector<int> &isVisited, int &c, int &d) {
+        isVisited[node] = 1;
+        low[node] = time[node] = clock++;
+        for (auto nbr: adj[node]) {
+            if (nbr == parent) continue;
+            if (!isVisited[nbr]) {
+                if (dfs(nbr, node, adj, clock, time, low, isVisited, c, d)) return true;
+                low[node] = min(low[node], low[nbr]);
+                if (time[node] < low[nbr] && min(node, nbr) == min(c, d) && max(node, nbr) == max(c, d)) return true;
+            }
+            else{
+                low[node] = min(low[node], low[nbr]);
+            }
+        }
+        return false;
+    }
+    bool isBridge(int V, vector<vector<int>> &edges, int c, int d) {
+        // Code here
+        vector<vector<int>> adj(V);
+        for (auto it: edges) {
+            int u = it[0], v = it[1];
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+            
+        }
+        
+        vector<int> time(V), low(V), isVisited(V, 0);
+        int clock = 0;
+        for (int i = 0; i < V; i++) {
+            if (!isVisited[i]) {
+                if (dfs(i, -1, adj, clock, time, low, isVisited, c, d)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
+// Articulation Point (Rohit Negi Video)
+
+class Solution {
+  private:
+    int timer = 0;
+  public:
+    void dfs(int node, int parent, vector<int> &isVisited, vector<int> &disc, vector<int> &low, vector<vector<int>> &adj, vector<int> &isArticulation) {
+        disc[node] = low[node] = timer++;
+        isVisited[node] = 1;
+        int childCount = 0;
+        for (auto nbr: adj[node]) {
+            if (nbr == parent) continue;
+            if (!isVisited[nbr]) {
+               dfs(nbr, node, isVisited, disc, low, adj, isArticulation);
+               if (low[nbr] >= disc[node] && parent != -1) {
+                   isArticulation[node] = 1;
+               }
+               low[node] = min(low[node], low[nbr]);
+               childCount++;
+            }
+            else {
+                low[node] = min(low[node], disc[nbr]);
+            }
+        }
+        if (parent == -1 && childCount >= 2) isArticulation[node] = 1;
+    }
+    vector<int> articulationPoints(int V, vector<vector<int>>& edges) {
+        // Code here
+        vector<vector<int>> adj(V);
+        // Create Adjacency List
+        for (auto it: edges) {
+            int u = it[0], v = it[1];
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        vector<int> isVisited(V, 0), isArticulation(V, 0), disc(V), low(V);
+        // DFS Traversal to find articulation point
+        for (int i = 0; i < V; i++) {
+            if (!isVisited[i]) {
+                dfs(i, -1, isVisited, disc, low, adj, isArticulation);
+            }
+        }
+        vector<int> ans;
+        for (int i = 0; i < V; i++) {
+            if (isArticulation[i]) {
+                ans.push_back(i);
+            }
+        }
+        if (!ans.empty()) return ans;
+        else return {-1};
+    }
+};
